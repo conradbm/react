@@ -2,6 +2,31 @@
 
 `https://www.taniarascia.com/getting-started-with-react/`
 
+Starter commands
+
+`npx create-react-app react-tutorial`
+
+`cd react-tutorial && npm start`
+
+Now once we are ready to deploy
+
+`npm run build`
+
+This packakges up the whole project, ready to be deployed to an application server with node.js installed (that is `git --version;node --version; npm --version;`).
+
+
+Next steps,
+
+Undersstand https://docs.github.com/en/free-pro-team@latest/github/working-with-github-pages/about-github-pages
+
+and run,
+
+`npm install --save-dev gh-pages`
+
+`npm run build`
+
+`npm run deploy`
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
