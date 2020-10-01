@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 
-class App extends Component {
+class ApiApp extends Component {
   state = {
     data: [],
   }
@@ -30,4 +30,4 @@ class App extends Component {
   }
 }
 
-export default App
+export default ApiApp
