@@ -1,8 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './Api'
-//import App from './App'
+import ApiApp from './Api'
+import TableApp from './App'
 import './index.css'
 
 
-ReactDOM.render(<App />, document.getElementById('root'))
+ReactDOM.render(<ApiApp />, document.getElementById('api_root'))
+ReactDOM.render(<TableApp />, document.getElementById('table_root'))
