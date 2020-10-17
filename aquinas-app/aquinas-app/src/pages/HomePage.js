@@ -1,19 +1,17 @@
 import React from 'react';
+import { Container, Row, Col } from 'reactstrap';
 
 class HomePage extends React.Component {
     render(){
         return(
             <div>
-                <h1>Home page content</h1>
-                <div className="container text-white">
-                    <p>aaasddddddddddasdsadadad</p>
-                    <p>aaasddddddddddasdsadadad</p>
-                    <p>aaasddddddddddasdsadadad</p>
-                    <p>aaasddddddddddasdsadadad</p>
-                    <p>aaasddddddddddasdsadadad</p>
-                    <p>aaasddddddddddasdsadadad</p>
-                </div>
-                
+                <Container>
+                    <br></br>
+                    <Row>
+                        <h1>Home Page</h1>
+                        <Col></Col>
+                    </Row>
+                </Container>
             </div>
         )
     }

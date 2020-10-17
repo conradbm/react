@@ -38,6 +38,9 @@ class NavBar extends React.Component {
                     <li className="nav-item">
                          <Link className="nav-link" to={"/explore"}>Explore <span className="sr-only">(current)</span></Link>
                     </li>
+                    <li className="nav-item">
+                         <Link className="nav-link" to={"/subscribe"}>Subscribe <span className="sr-only">(current)</span></Link>
+                    </li>
                     </ul>
 
                 </div>

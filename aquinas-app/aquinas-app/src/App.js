@@ -4,6 +4,7 @@ import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
 import ResearchPage from './pages/ResearchPage';
+import SubscribePage from './pages/SubscribePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 import {
@@ -29,6 +30,7 @@ class App extends Component {
                 <Route path="/" component={HomePage} exact></Route>
                 <Route path="/research" component={ResearchPage} ></Route>
                 <Route path="/explore" component={ExplorePage}></Route>
+                <Route path="/subscribe" component={SubscribePage}></Route>
                 {/* <Route path="/article/:name" component={ArticlePage}  /> */}
                 <Route component={NotFoundPage}></Route>
               </Switch>

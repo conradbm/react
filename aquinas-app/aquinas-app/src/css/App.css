@@ -1,12 +1,15 @@
-.add-appointment .card-body {
+.hide {
   display: none;
 }
 
-.apt-addheading {
+.pointer  {
   cursor: pointer;
   user-select: none;
 }
 
+.result-item-content-last {
+  border-bottom: 2px solid black;
+}
 .appointment-list {
   font-size: 1.1em;
 }

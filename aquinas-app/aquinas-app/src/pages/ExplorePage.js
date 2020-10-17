@@ -3,26 +3,24 @@ import { Container, Row, Col } from 'reactstrap';
 
 class ExplorePage extends React.Component {
 
+    state = {
+        searchText:"",
+    }
+
   // Load data on mount
   componentDidMount = () => {
-    console.log("inside handleGetJson");
-    fetch(`../../aquinas.json`, {
-        headers : { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      })
-      .then((response) => response.json())
-      .then((data) => {
-        //console.log(data[0]);
-        this.setState({
-            data:data, 
-            selectedVolume:data[0].volume, 
-            selectedQuestion:data[0].questionTitle, 
-            selectedArticle:data[0].articleTitle,
-        });
+    console.log("Mounting");
+    }
 
-      });
+    // Handle search submit
+    handleSubmit = (e) => {
+        e.preventDefault();
+        console.log(`Search text is currently ${this.state.searchText}`);
+    }
+
+    // Handle on change
+    handleOnChange = (e) => {
+        this.setState({searchText:e.target.value});
     }
 
     render(){
@@ -40,8 +38,11 @@ class ExplorePage extends React.Component {
                     <br></br>
                     <Row>
                         <Col>
-                            <form className="form-inline my-2 my-lg-0">
-                                <input className="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search"></input>
+                            <form className="form-inline my-2 my-lg-0" 
+                                  onSubmit={(e) => this.handleSubmit(e)}>
+                                <input className="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search"
+                                        name={"searchField"}
+                                        onChange={(e) => this.handleOnChange(e)}></input>
                                 <button className="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
                             </form>
                         </Col>

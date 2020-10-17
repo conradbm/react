@@ -1,35 +1,120 @@
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
+import {FaPlus, FaMinus} from 'react-icons/fa';
 
+/**
+ * Front-end Requirements ...
+ * 1. Search for drop down boxes on Questions and Articles
+ * 2. CSS formatting for all search results
+ * 3. Accessing data from a MongoDB
+ * 4. Hyperlink clicking on sections of the result to enable more indepth discovery
+ * 
+ * Back-end Requirements ...
+ * 1. Create a similarity matrix blobing all content from questionTitle, articleTitle, and content to map each article to each
+ * 2. Create the MongoDB
+ * 3. Create Express API to access data from the MongoDB
+ * 
+ */
 class ResearchPage extends React.Component {
 
     state = {
         selectedVolume: undefined,
         selectedQuestion: undefined,
         selectedArticle: undefined,
-        data:[],
+        shell_data:[],
+        display_data:{articleObjections:[], articleBody:"", articleReplyToObjections:[]},
         filteredData:undefined,
+        displayResearch:true,
+        displayResults:false,
+        displaySimilar:false,
+        selectedVolumeKey:"",
+        selectedQuestionKey:"",
+        selectedArticleKey:"",
+        similarityData:[],
     }
+
+    // Fetch data helper
+    fetchData = async (v,q,a) => {
+        // let v = this.state.selectedVolumeKey;
+        // let q = this.state.selectedQuestionKey;
+        // let a = this.state.selectedArticleKey;
+        let url = `/api/articles/${v}/${q}/${a}`;
+        //console.log(url);
+        const result = await fetch(url, {
+            method: "GET",
+            headers : { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            }
+        });
+        const body = await result.json();
+        this.setState({display_data:body});        
+    }
+
+
+    // Fetch data helper
+    fetchSimilarityData = async (v,q,a) => {
+        
+        let url = `/api/similarity/${v}/${q}/${a}`;
+        console.log(url);
+        const rankResults = await fetch(url, {
+            method: "GET",
+            headers : { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            }
+        });
+        const bodyRanks = await rankResults.json();
+
+        const recommendedList = [];
+        bodyRanks.ranks.map(async (rank, i) => {
+            let url = `/api/articles/${rank.volumeKey}/${rank.questionKey}/${rank.articleKey}`;
+            console.log(`Result ${i}`);
+            console.log(url);
+            const contentResult = await fetch(url, {
+                method: "GET",
+                headers : { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                }
+            });
+            const resultData = await contentResult.json();
+            recommendedList.push(resultData);
+        });
+        console.log(recommendedList);
+        this.setState({similarityData:recommendedList});  
+      
+    }
+    
 
   // Load data on mount
   componentDidMount = () => {
-    console.log("inside handleGetJson");
-    fetch(`../../aquinas.json`, {
+    fetch(`aquinas_shell.json`, {
         headers : { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       })
       .then((response) => response.json())
-      .then((data) => {
-        //console.log(data[0]);
-        this.setState({
-            data:data, 
-            selectedVolume:data[0].volume, 
-            selectedQuestion:data[0].questionTitle, 
-            selectedArticle:data[0].articleTitle,
-        });
+      .then((shell_data) => {
 
+        // Fetch initial content
+        const v = shell_data[0].volumeKey;
+        const q = shell_data[0].questionKey;
+        const a = shell_data[0].articleKey;
+
+        this.fetchData(v,q,a);
+        this.fetchSimilarityData(v,q,a);
+
+        this.setState({
+            shell_data:shell_data,
+            selectedVolume:shell_data[0].volume, 
+            selectedVolumeKey:shell_data[0].volumeKey,
+            selectedQuestion:shell_data[0].questionTitle,
+            selectedQuestionKey:shell_data[0].questionKey, 
+            selectedArticle:shell_data[0].articleTitle,
+            selectedArticleKey:shell_data[0].articleKey,
+        });
       });
     }
 
@@ -42,16 +127,26 @@ class ResearchPage extends React.Component {
             let volume = e.target.value;
 
             // Update the selected question
-            const filteredData = this.state.data.filter(item => item.volume === volume);
+            const filteredData = this.state.shell_data.filter(item => item.volume === volume);
             const selectedQuestion = filteredData[0].questionTitle;
-            const filteredTwice = filteredData.filter(item => item.questionTitle === selectedQuestion);
+            const volumeKey = filteredData[0].volumeKey;
+            const filteredTwice = filteredData.filter(item => item.questionTitle.includes("Question 1."));
             const selectedArticle = filteredTwice[0].articleTitle;
+            const questionKey = filteredTwice[0].questionKey;
+            const articleKey = filteredTwice[0].articleKey;
+
+            // Update content data from db
+            this.fetchData(volumeKey, questionKey, articleKey);
+            this.fetchSimilarityData(volumeKey, questionKey, articleKey);
 
             // Set state
             this.setState({
                 selectedVolume:volume,
+                selectedVolumeKey:volumeKey,
                 selectedQuestion:selectedQuestion,
-                selectedArticle:selectedArticle
+                selectedQuestionKey:questionKey,
+                selectedArticle:selectedArticle,
+                selectedArticleKey:articleKey,
             });
         }
         else if (cat === "question"){
@@ -61,29 +156,56 @@ class ResearchPage extends React.Component {
             let question = e.target.value;
 
             // Update the selected question
-            const filteredData = this.state.data.filter(item => item.volume === volume);
+            const filteredData = this.state.shell_data.filter(item => item.volume === volume);
+            const volumeKey = filteredData[0].volumeKey;
             const filteredTwice = filteredData.filter(item => item.questionTitle === question);
+            const questionKey = filteredTwice[0].questionKey;
             const selectedArticle = filteredTwice[0].articleTitle;
+            const articleKey = filteredTwice[0].articleKey;
+
+            // Update content data from db
+            this.fetchData(volumeKey, questionKey, articleKey);
+            this.fetchSimilarityData(volumeKey, questionKey, articleKey);
 
             // Set state
             this.setState({
                 selectedVolume:volume,
+                selectedVolumeKey:volumeKey,
                 selectedQuestion:question,
-                selectedArticle:selectedArticle
+                selectedQuestionKey:questionKey,
+                selectedArticle:selectedArticle,
+                selectedArticleKey:articleKey,
             });
         }
         else if (cat === "article"){
 
+            const article = e.target.value;
+            const selectedArticle = this.state.shell_data.filter(item => item.articleTitle === article);
+            const volumeKey = selectedArticle[0].volumeKey;
+            const questionKey = selectedArticle[0].questionKey;
+            const articleKey = selectedArticle[0].articleKey;
+
+            // Update content data from db
+            this.fetchData(volumeKey, questionKey, articleKey);
+            this.fetchSimilarityData(volumeKey, questionKey, articleKey);
+
             // Set state
             this.setState({
-                selectedArticle:e.target.value,
+                selectedArticle:article,
+                selectedVolumeKey:volumeKey,
+                selectedQuestionKey:questionKey,
+                selectedArticleKey:articleKey,
             });
         }
         else{
             console.log("Something went wrong");
         }
 
-        //console.log(this.state.data.filter(item => item.articleTitle === this.state.selectedArticle));
+        // Update live data for display
+        // this.fetchData();
+        // console.log(this.state.display_data);
+
+        //console.log(this.state.shell_data.filter(item => item.articleTitle === this.state.selectedArticle));
     }
     naturalCompare = (a, b) => {
         var ax = [], bx = [];
@@ -101,93 +223,181 @@ class ResearchPage extends React.Component {
         return ax.length - bx.length;
     }
 
+    // Toggle research header
+    toggleResearchHeader = (e) => {
+        //console.log("working header");
+        this.setState({
+            displayResearch:!this.state.displayResearch
+        });
+    }
+
+    // Toggle research header
+    toggleResultsHeader = (e) => {
+        //console.log("working results");
+        this.setState({
+            displayResults:!this.state.displayResults
+        });
+    }
+
+    // Toggle similar header
+    toggleSimilarHeader = (e) => {
+        this.setState({
+            displaySimilar:!this.state.displaySimilar,
+        })
+    }
+
     render(){
 
         return(
             <div>
                 <Container>
                     <br></br>
-                    <Row>
-                        <h1>Research Page</h1>
-                    </Row>
                     <Col>
-                        <Row> 
-                                <div id="volume-select-div">
-                                    <h2>Volume</h2>
-                                    <select className="form-control selectpicker"
-                                            defaultValue={this.state.selectedVolume}
-                                            onChange={(e) => this.handleInputChange(e, 'volume')}
-                                            >
+                        <Row className="card mt-3"> 
+                                <h3 className="card-header pointer"
+                                     onClick={(e) => this.toggleResearchHeader(e)}>
+                                    {this.state.displayResearch ? 
+                                     <FaMinus></FaMinus> :
+                                     <FaPlus></FaPlus>} Research
+                                </h3>
+                                <div className={
+                                        this.state.displayResearch ? 
+                                        "card-body" : 
+                                        "card-body ".concat("hide")
+                                    }
+                                    >
+                                    <div id="volume-select-div">
+                                        <h4>Volume</h4>
+                                        <select className="form-control selectpicker"
+                                                defaultValue={this.state.selectedVolume}
+                                                onChange={(e) => this.handleInputChange(e, 'volume')}
+                                                >
+                                                {
+                                                Array.from(new Set(this.state.shell_data
+                                                    .map(item => item.volume)))
+                                                    .sort()
+                                                .map((uniqueVolumes,i) => 
+                                                    <option key={i} value={uniqueVolumes}>{uniqueVolumes}</option>
+                                                )
+                                                }
+                                    </select>
+                                    </div>
+
+                                    <div id="question-select-div">
+                                        <h4>Question</h4>
+                                        <select className="form-control selectpicker"
+                                                data-live-search={true}
+                                                defaultValue={this.state.selectedQuestion}
+                                                onChange={(e) => this.handleInputChange(e, 'question')}>
                                             {
-                                            Array.from(new Set(this.state.data
-                                                .map(item => item.volume)))
-                                                .sort()
-                                            .map((uniqueVolumes,i) => 
-                                                <option key={i} value={uniqueVolumes}>{uniqueVolumes}</option>
-                                            )
+                                                Array.from(new Set(this.state.shell_data
+                                                    .filter(item => item.volume === this.state.selectedVolume)
+                                                    .map(item => item.questionTitle)))
+                                                    .sort((a,b) => this.naturalCompare(a,b))
+                                                .map((uniqueQuestion,i) => 
+                                                    <option key={i} value={uniqueQuestion}>{uniqueQuestion}</option>
+                                                )
                                             }
-                                </select>
+                                    </select>
                                 </div>
+
+                                <div id="article-select-div">
+                                        <h4>Article</h4>
+                                        <select className="form-control selectpicker"
+                                                defaultValue={this.state.selectedArticle}
+                                                onChange={(e) => this.handleInputChange(e, 'article')}>
+                                                {
+                                                Array.from(new Set(this.state.shell_data
+                                                    .filter(item => item.questionTitle === this.state.selectedQuestion)
+                                                    .map(item => item.articleTitle)))
+                                                    .sort((a,b) => this.naturalCompare(a,b))
+                                                .map((uniqueArticle,i) => 
+                                                    <option key={i} value={uniqueArticle}>{uniqueArticle}</option>
+                                                )
+                                            }
+                                    </select>
+                                    </div> 
+                                </div>
+                               
                         </Row>
-                        <Row> 
-                                <div id="question-select-div">
-                                    <h2>Question</h2>
-                                    <select className="form-control selectpicker"
-                                            data-live-search={true}
-                                            defaultValue={this.state.selectedQuestion}
-                                            onChange={(e) => this.handleInputChange(e, 'question')}>
-                                        {
-                                            Array.from(new Set(this.state.data
-                                                .filter(item => item.volume === this.state.selectedVolume)
-                                                .map(item => item.questionTitle)))
-                                                .sort((a,b) => this.naturalCompare(a,b))
-                                            .map((uniqueQuestion,i) => 
-                                                <option key={i} value={uniqueQuestion}>{uniqueQuestion}</option>
-                                            )
+                        <br></br>
+                        <hr></hr>
+                        <Row>
+                            <div className="card mt-3 ">                                    
+                                <h3 className='card-header pointer '
+                                    onClick={(e) => this.toggleResultsHeader(e)}>
+                                    {this.state.displayResults ?
+                                    <FaMinus></FaMinus> : 
+                                    <FaPlus> </FaPlus>} Results
+                                </h3>
+                                
+                                <div className={
+                                            this.state.displayResults ? 
+                                            "card-body" : 
+                                            "card-body ".concat("hide")
                                         }
-                                </select>
+                                        >
+                                    <h4>Objections ...</h4>
+                                        {this.state.display_data.articleObjections.map((obj,j) => (
+                                            <p key={j} className="objection-item">{obj}</p>
+                                        ))}
+                                    <h4>Body ...</h4>
+                                    <p className="body-item">
+                                        {this.state.display_data.articleBody}
+                                    </p>
+                                    <p></p>
+                                    <h4>Reply to Objections ...</h4>
+                                        {this.state.display_data.articleReplyToObjections.map((obj,j) => (
+                                            <p key={j} className="reply-to-objection-item">{obj}</p>
+                                        ))}    
+                                </div>
                             </div>
                         </Row>
-                        <Row> 
-                                <div id="article-select-div">
-                                    <h2>Article</h2>
-                                    <select className="form-control selectpicker"
-                                            defaultValue={this.state.selectedArticle}
-                                            onChange={(e) => this.handleInputChange(e, 'article')}>
-                                            {
-                                            Array.from(new Set(this.state.data
-                                                .filter(item => item.questionTitle === this.state.selectedQuestion)
-                                                .map(item => item.articleTitle)))
-                                                .sort((a,b) => this.naturalCompare(a,b))
-                                            .map((uniqueArticle,i) => 
-                                                <option key={i} value={uniqueArticle}>{uniqueArticle}</option>
-                                            )
-                                        }
-                                </select>
+
+                        <br></br>
+                        <hr></hr>
+                        <Row>
+                            <div className="card mt-3 ">
+                                <div key className="search-results">
+                                    
+                                    <h3 className='card-header pointer '
+                                        onClick={(e) => this.toggleSimilarHeader(e)}>
+                                        {this.state.displaySimilar ?
+                                        <FaMinus></FaMinus> : 
+                                        <FaPlus> </FaPlus>}  Similar
+                                    </h3>
+                                    
+                                    <div className={
+                                                this.state.displaySimilar ? 
+                                                "card-body" : 
+                                                "card-body ".concat("hide")
+                                            }
+                                            >  
+                                        {this.state.similarityData.map((item,i) => 
+                                            <div className="search-result-item" key={i}>
+                                                <a 
+                                                    href="" 
+                                                    key={i} 
+                                                    value={`${item.volumeKey}/${item.questionKey}/${item.articleKey}`}
+                                                       
+                                                    onClick={(e) => {e.preventDefault()}}>
+                                                         {`${item.volumeKey}/${item.questionKey}/   ${item.articleKey}`}
+                                                </a>
+                                                <p>{`${item.volume}`}</p>
+                                                <p>{`${item.questionTitle}`}</p>
+                                                <p className="result-item-content-last">
+                                                    {`${item.articleTitle}`}
+                                                </p>
+                                            </div>
+                                            
+                                        )} 
+                                    </div>
                                 </div>
+                            </div>
                         </Row>
                     </Col>
                     <br></br>
-                    <hr></hr>
-                    <div className="explore-results-div">
-                        {this.state.data
-                            .filter(item => item.articleTitle === this.state.selectedArticle)
-                            .map((item, i) => (
-                                <div key={i} className="search-results">
-                                    <h3>Objections</h3>
-                                        {item.articleObjection.map((obj,j) => (
-                                            <p key={j} className="objection-item">{obj}</p>
-                                        ))}
-                                    <h3>Body ...</h3>
-                                    {item.articleBody}
-                                    <p></p>
-                                    <h3>Reply to Objections ...</h3>
-                                        {item.articleReplyToObjections.map((obj,j) => (
-                                            <p key={j}>{obj}</p>
-                                        ))}
-                                </div>
-                            ))}
-                    </div>
+                    <br></br>
                 </Container>
             </div>
         )
