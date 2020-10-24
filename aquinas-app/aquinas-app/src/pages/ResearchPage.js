@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Row, Col } from 'reactstrap';
 import {FaPlus, FaMinus} from 'react-icons/fa';
+import { Link } from 'react-router-dom'
 
 /**
  * Front-end Requirements ...
@@ -54,7 +55,6 @@ class ResearchPage extends React.Component {
 
     // Fetch data helper
     fetchSimilarityData = async (v,q,a) => {
-        
         let url = `/api/similarity/${v}/${q}/${a}`;
         console.log(url);
         const rankResults = await fetch(url, {
@@ -364,7 +364,7 @@ class ResearchPage extends React.Component {
                                         onClick={(e) => this.toggleSimilarHeader(e)}>
                                         {this.state.displaySimilar ?
                                         <FaMinus></FaMinus> : 
-                                        <FaPlus> </FaPlus>}  Similar
+                                        <FaPlus> </FaPlus>}  Suggested Readings
                                     </h3>
                                     
                                     <div className={
