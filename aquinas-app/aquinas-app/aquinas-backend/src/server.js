@@ -119,12 +119,22 @@ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 
 10. Go manually to security groups for this EC2 instance and change port 80 to ANYWHERE.
 
+
+*** Index a collection ***
+> db.articles.createIndex({"questionTitle":"text", "articleTitle":"text", "articleObjections":"text", "articleBody":"text", "articleReplyToObjections":"text"});
+db.articles.findOne( { $text: { $search: "love" } } );
+
+*** Create a search history table
+use aquinas-db;
+db.createCollection("history");
+
 */
 
 import express from 'express';
 import bodyParser from 'body-parser';
 import { MongoClient } from 'mongodb';
 import path from 'path';
+import { CLIENT_RENEG_LIMIT } from 'tls';
 
 // req/request is the input medium with data coming in
 // res/response is the output medium to transmit data back
@@ -157,7 +167,6 @@ const withDB = async (operations, res) => {
         res.status(500).json({message:"Error connecting to db ", error});
     }
 }
-
 // GET: Retrieve article data
 app.get('/api/articles/:volume/:question/:article', async (req, res) => {
 
@@ -174,7 +183,7 @@ app.get('/api/articles/:volume/:question/:article', async (req, res) => {
     }, res);
 })
 
-// GET: Retrieve article data
+// GET: Retrieve similarity data
 app.get('/api/similarity/:volume/:question/:article', async (req, res) => {
 
     // Start with withDB code, until we hit the parameter `operations`
@@ -190,6 +199,25 @@ app.get('/api/similarity/:volume/:question/:article', async (req, res) => {
     }, res);
 })
 
+// POST: Search
+app.post('/api/search', async (req, res) => {
+    
+    withDB( async (db) => {
+
+        // Get URL/body parameters
+        const query = req.body.query;
+
+        // Save the query into the database
+        await db.collection('history').insertOne({username: "Guest", query: query, date: Date()});
+
+        // Select statement
+        const articleInfo = await db.collection('articles').find({ "$text": {"$search":query}}).limit(15).toArray();
+
+        // Send latest back
+        res.status(200).json(articleInfo);
+    }, res)
+
+})
 // POST: Update article upvote/selected data
 // app.post('/api/articles/:name/upvote', async (req, res) => {
     
